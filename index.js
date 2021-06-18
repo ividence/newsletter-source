@@ -3,13 +3,13 @@ const moment = require('moment');
 
 const storage = new Storage({keyFilename: "sa.json"});
 const bucket = `ivi-owned-media`;
-const newsletterPath = `capdecision/focusnews/auto/newsletter-${moment().format('YYYYMMDD')}.html`;
+const categories = ['auto', 'deco', 'eco', 'people'];
 
-async function download(file) {
+async function download(source, destination) {
     await storage
         .bucket(bucket)
-        .file(file)
-        .download({destination: "downloaded.html"})
+        .file(source)
+        .download({destination});
 }
 
 async function getMetadata(file) {
@@ -17,10 +17,17 @@ async function getMetadata(file) {
     return {contentType, subject};
 }
 
-download(newsletterPath)
-    .catch(console.error)
-    .then(_ => console.log("downloaded!"));
+categories.forEach(category => {
+    const today = moment().format('YYYYMMDD');
+    const newsletterPath = `capdecision/focusnews/${category}/newsletter-${today}.html`;
+    const dest = `${today}-${category}.html`
 
-getMetadata(newsletterPath)
-    .catch(console.error)
-    .then(({contentType, subject}) => console.log(`Subject:\t\t${subject}\nContent-Type:\t${contentType}`));
+    download(newsletterPath, dest)
+        .catch(console.error)
+        .then(_ => console.log(`${dest} downloaded!`));
+
+    getMetadata(newsletterPath)
+        .catch(console.error)
+        .then(({contentType, subject}) => console.log(`Category: ${category}\nSubject: ${subject}\nContent-Type: ${contentType}\nFile: ${dest}\n====`));
+})
+
